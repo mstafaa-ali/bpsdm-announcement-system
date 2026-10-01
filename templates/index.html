@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Office Announcement & Prayer Alert System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .dark .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    .pulse-indicator {
+      animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .6; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 glass-panel">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-tight flex items-center space-x-2">
+            <span>Smart Office Announcer</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400 border border-brand-200 dark:border-brand-800">v2.0</span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">BPSDM ESDM • Automatic PA & Prayer Alert</p>
+        </div>
+      </div>
+
+      <!-- Center Status & Clock -->
+      <div class="hidden md:flex items-center space-x-6">
+        <!-- Live Clock -->
+        <div class="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+          <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="live-clock" class="font-mono text-sm font-semibold tracking-wider">--:--:--</span>
+          <span id="server-tz" class="text-xs font-medium text-slate-500 dark:text-slate-400">WIB</span>
+        </div>
+
+        <!-- Engine Status Badge -->
+        <div id="engine-status-badge" class="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-indicator"></span>
+          <span id="engine-status-text">Siaga (Ready)</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2.5">
+        <!-- Emergency Button -->
+        <button id="btn-emergency" onclick="triggerEmergencyBroadcast()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition">
+          <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span class="hidden sm:inline">EMERGENCY</span>
+        </button>
+
+        <!-- Quick Speaker Test -->
+        <button onclick="testChimePlayback()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-xs font-medium border border-slate-200 dark:border-slate-700 transition">
+          <svg class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <span class="hidden sm:inline">Tes Speaker</span>
+        </button>
+
+        <!-- Dark Mode Toggle -->
+        <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <svg id="theme-icon-dark" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+          <svg id="theme-icon-light" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- HERO / BANNER CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      
+      <!-- Next Schedule Countdown Card -->
+      <div class="p-5 rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 text-white shadow-lg shadow-brand-500/15 relative overflow-hidden flex flex-col justify-between">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-200">Jadwal Berikutnya</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur">AUTO</span>
+          </div>
+          <h3 id="next-schedule-name" class="text-xl font-bold truncate">Memuat jadwal...</h3>
+          <p id="next-schedule-time" class="text-sm text-brand-100 font-medium mt-0.5">--:--</p>
+        </div>
+        <div class="mt-4 pt-4 border-t border-white/15 flex items-center justify-between">
+          <div class="text-xs text-brand-200">Hitung Mundur:</div>
+          <div id="next-schedule-countdown" class="font-mono text-base font-bold bg-white/10 px-2.5 py-1 rounded-md">--:--:--</div>
+        </div>
+      </div>
+
+      <!-- Prayer Reminders Overview Card -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm">Pengingat Sholat (T-2 Menit)</h4>
+              <p id="prayer-city-badge" class="text-xs text-slate-500">Jakarta (2 Mnt Sebelum Adzan)</p>
+            </div>
+          </div>
+          <span id="prayer-source-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">API</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Dzuhur</span>
+            <p id="time-dzuhur" class="font-mono text-base font-bold text-brand-600 dark:text-brand-400 mt-0.5">--:--</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Ashar</span>
+            <p id="time-ashar" class="font-mono text-base font-bold text-brand-600 dark:text-brand-400 mt-0.5">--:--</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Maghrib</span>
+            <p id="time-maghrib" class="font-mono text-base font-bold text-brand-600 dark:text-brand-400 mt-0.5">--:--</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Diagnostic Health Card -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-bold text-sm">Status & Diagnostik</h4>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </div>
+        <div class="space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Audio Output:</span>
+            <span id="diag-audio-device" class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px]" title="Device Name">Default System</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Total Media Audio:</span>
+            <span id="diag-media-count" class="font-semibold text-slate-800 dark:text-slate-200">-- File</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Tugas Aktif Engine:</span>
+            <span id="diag-jobs-count" class="font-semibold text-slate-800 dark:text-slate-200">-- Task</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Engine DB: SQLite (WAL Mode)</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Tahan Crash</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-2 sm:space-x-8 overflow-x-auto">
+      <button onclick="switchTab('schedules')" id="tab-btn-schedules" class="tab-btn border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 font-bold text-sm pb-3 px-1 whitespace-nowrap flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Jadwal Rutin</span>
+      </button>
+
+      <button onclick="switchTab('prayer')" id="tab-btn-prayer" class="tab-btn border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm pb-3 px-1 whitespace-nowrap flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <span>Pengingat Sholat</span>
+      </button>
+
+      <button onclick="switchTab('media')" id="tab-btn-media" class="tab-btn border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm pb-3 px-1 whitespace-nowrap flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        <span>Media Audio</span>
+      </button>
+
+      <button onclick="switchTab('logs')" id="tab-btn-logs" class="tab-btn border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm pb-3 px-1 whitespace-nowrap flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Log & Riwayat</span>
+      </button>
+
+      <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-btn border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm pb-3 px-1 whitespace-nowrap flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>Pengaturan Sistem</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: JADWAL RUTIN -->
+    <div id="tab-content-schedules" class="tab-pane space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold">Daftar Jadwal Pengumuman Statis</h2>
+          <p class="text-xs text-slate-500">Jadwal audio berulang untuk jam masuk, istirahat, briefing, dan jam pulang.</p>
+        </div>
+        <button onclick="openScheduleModal()" class="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-brand-600/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Tambah Jadwal</span>
+        </button>
+      </div>
+
+      <!-- Schedule Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-xs uppercase font-semibold border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <th class="px-5 py-3.5">Nama Pengumuman</th>
+                <th class="px-5 py-3.5">Waktu (24 Jam)</th>
+                <th class="px-5 py-3.5">Hari Aktif</th>
+                <th class="px-5 py-3.5">File Audio</th>
+                <th class="px-5 py-3.5 text-center">Status</th>
+                <th class="px-5 py-3.5 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="schedules-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PENGINGAT SHOLAT -->
+    <div id="tab-content-prayer" class="tab-pane hidden space-y-6">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2 class="text-lg font-bold">Konfigurasi Pengingat Waktu Sholat</h2>
+            <p class="text-xs text-slate-500">Sistem menyiarkan pengingat 2 menit sebelum masuk waktu sholat (tidak memutar adzan saat masuk waktu).</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="prayer-master-enabled" class="sr-only peer" onchange="savePrayerConfig()">
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+            </label>
+            <span class="text-xs font-semibold">Aktifkan Pengingat Sholat</span>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 flex items-start space-x-3">
+          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="text-xs text-blue-900 dark:text-blue-200">
+            <span class="font-bold">Mode Pengingat Waktu Sholat:</span> Audio hanya akan disiarkan <span class="font-semibold underline">2 menit sebelum adzan</span> berkumandang untuk mengingatkan jamaah bersiap. Tidak ada pemutaran audio di saat adzan tiba.
+          </div>
+        </div>
+
+        <form id="prayer-form" onsubmit="event.preventDefault(); savePrayerConfig();" class="space-y-6">
+          <!-- Location & Calculation Settings -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">ID Kota Kemenag / MyQuran</label>
+              <input type="text" id="prayer-city-id" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none" value="1301">
+              <p class="text-[11px] text-slate-400 mt-1">Default 1301 (Kota Jakarta)</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Nama Kota Display</label>
+              <input type="text" id="prayer-city-name" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none" value="Kota Jakarta">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Offset Pengingat Sebelum Sholat</label>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="prayer-reminder-offset" min="1" max="15" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none" value="2">
+                <span class="text-xs font-medium text-slate-500">Menit Sebelum Adzan</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- GPS Coordinates for Offline Calculation -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Latitude (Lintang)</label>
+              <input type="number" step="0.0001" id="prayer-latitude" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none" value="-6.2088">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Longitude (Bujur)</label>
+              <input type="number" step="0.0001" id="prayer-longitude" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none" value="106.8456">
+            </div>
+          </div>
+
+          <!-- 3 Operasional Prayer Reminders (Dzuhur, Ashar, Maghrib) -->
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Pilihan Pengingat Sholat Operasional (T-2 Menit)</h3>
+            
+            <!-- Dzuhur Reminder -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-3">
+                <input type="checkbox" id="prayer-dzuhur-enabled" class="w-4 h-4 text-brand-600 rounded">
+                <div>
+                  <span class="font-bold text-sm">Pengingat Menjelang Dzuhur</span>
+                  <p class="text-xs text-slate-500">Diputar 2 menit sebelum masuk waktu Dzuhur</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <select id="prayer-dzuhur-audio" class="media-select-options px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></select>
+              </div>
+            </div>
+
+            <!-- Ashar Reminder -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-3">
+                <input type="checkbox" id="prayer-ashar-enabled" class="w-4 h-4 text-brand-600 rounded">
+                <div>
+                  <span class="font-bold text-sm">Pengingat Menjelang Ashar</span>
+                  <p class="text-xs text-slate-500">Diputar 2 menit sebelum masuk waktu Ashar</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <select id="prayer-ashar-audio" class="media-select-options px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></select>
+              </div>
+            </div>
+
+            <!-- Maghrib Reminder -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-3">
+                <input type="checkbox" id="prayer-maghrib-enabled" class="w-4 h-4 text-brand-600 rounded">
+                <div>
+                  <span class="font-bold text-sm">Pengingat Menjelang Maghrib</span>
+                  <p class="text-xs text-slate-500">Diputar 2 menit sebelum masuk waktu Maghrib (lembur/pulang)</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <select id="prayer-maghrib-audio" class="media-select-options px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-brand-600/20 transition">
+              Simpan Pengaturan Pengingat Sholat
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 3: MEDIA AUDIO -->
+    <div id="tab-content-media" class="tab-pane hidden space-y-6">
+      
+      <!-- Upload Box -->
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 text-center hover:border-brand-500 transition">
+        <input type="file" id="media-file-input" class="hidden" accept=".mp3,.wav,.ogg,.flac" onchange="uploadAudioFile(this)">
+        <div class="space-y-2 cursor-pointer" onclick="document.getElementById('media-file-input').click()">
+          <div class="w-12 h-12 mx-auto rounded-full bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <p class="text-sm font-semibold">Klik untuk Unggah File Audio Baru</p>
+          <p class="text-xs text-slate-500">Mendukung format MP3, WAV, OGG (Maks 50 MB per file)</p>
+        </div>
+      </div>
+
+      <!-- Media List -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <h3 class="font-bold text-sm">Daftar File Audio Tersimpan</h3>
+          <button onclick="loadMediaList()" class="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">Refresh</button>
+        </div>
+        <div id="media-list-container" class="divide-y divide-slate-100 dark:divide-slate-800">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: LOG & DIAGNOSTIK -->
+    <div id="tab-content-logs" class="tab-pane hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold">Log Aktivitas & Riwayat Playback</h2>
+          <p class="text-xs text-slate-500">Catatan riwayat pemutaran audio, sinkronisasi waktu sholat, dan error sistem.</p>
+        </div>
+        <button onclick="loadActivityLogs()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold hover:bg-slate-200 transition">Refresh Log</button>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase font-semibold border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Timestamp</th>
+                <th class="px-4 py-3">Tipe Event</th>
+                <th class="px-4 py-3">Sumber / Jadwal</th>
+                <th class="px-4 py-3">File Audio</th>
+                <th class="px-4 py-3">Device Target</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Pesan Detail</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: PENGATURAN SISTEM -->
+    <div id="tab-content-settings" class="tab-pane hidden space-y-6">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 class="text-lg font-bold">Pengaturan Perangkat Keras & Sistem</h2>
+          <p class="text-xs text-slate-500">Konfigurasi audio output device, volume global, timezone, dan port.</p>
+        </div>
+
+        <form id="settings-form" onsubmit="event.preventDefault(); saveSystemSettings();" class="space-y-6">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Audio Output Device Selector -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Audio Output Device (Speaker / PA Amplifier)</label>
+                <button type="button" onclick="testSelectedDevice()" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                  <span>🔊 Tes Device Ini</span>
+                </button>
+              </div>
+              <select id="settings-audio-device" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none">
+                <option value="">Default System Output Device</option>
+              </select>
+              <p class="text-[11px] text-slate-400 mt-1">Pilih port jack audio / sound card yang terhubung ke amplifier PA kantor.</p>
+            </div>
+
+            <!-- Timezone -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Timezone Kantor</label>
+              <select id="settings-timezone" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none">
+                <option value="Asia/Jakarta">WIB - Asia/Jakarta (UTC+7)</option>
+                <option value="Asia/Makassar">WITA - Asia/Makassar (UTC+8)</option>
+                <option value="Asia/Jayapura">WIT - Asia/Jayapura (UTC+9)</option>
+              </select>
+            </div>
+
+            <!-- Global Volume Slider -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Volume Global Speaker</label>
+                <span id="volume-label" class="text-xs font-mono font-bold text-brand-600 dark:text-brand-400">85%</span>
+              </div>
+              <input type="range" id="settings-volume" min="0" max="100" value="85" oninput="document.getElementById('volume-label').textContent = this.value + '%'" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+            </div>
+
+            <!-- Chime Settings -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">File Chime / Nada Pembuka</label>
+              <select id="settings-chime-file" class="media-select-options w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none"></select>
+            </div>
+
+          </div>
+
+          <!-- Toggles -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-semibold text-xs text-slate-800 dark:text-slate-200">Bunyikan Chime Sebelum Setiap Pengumuman</span>
+                <p class="text-[11px] text-slate-500">Membunyikan nada 'ding-dong' 2 detik sebelum pesan utama.</p>
+              </div>
+              <input type="checkbox" id="settings-prepend-chime" class="w-4 h-4 text-brand-600 rounded">
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+              <div>
+                <span class="font-semibold text-xs text-slate-800 dark:text-slate-200">Otomatis Jalankan Saat PC Menyala (Windows Startup)</span>
+                <p class="text-[11px] text-slate-500">Mendaftarkan aplikasi ke registry Windows agar berjalan otomatis setelah restart.</p>
+              </div>
+              <input type="checkbox" id="settings-autostart" class="w-4 h-4 text-brand-600 rounded">
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-brand-600/20 transition">
+              Simpan Pengaturan Sistem
+            </button>
+          </div>
+        </form>
+
+        <!-- Backup & Restore Section -->
+        <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+          <h3 class="font-bold text-sm mb-1">Backup & Pemulihan Konfigurasi</h3>
+          <p class="text-xs text-slate-500 mb-4">Ekspor seluruh jadwal dan konfigurasi untuk cadangan atau migrasi ke PC lain.</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="/api/backup/export" class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Export Backup JSON</span>
+            </a>
+            <label class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold cursor-pointer transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <span>Import Restore JSON</span>
+              <input type="file" accept=".json" class="hidden" onchange="importBackupJSON(this)">
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: ADD / EDIT SCHEDULE -->
+  <div id="schedule-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h3 id="schedule-modal-title" class="font-bold text-base">Tambah Jadwal Pengumuman</h3>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="schedule-form" onsubmit="event.preventDefault(); saveScheduleItem();" class="space-y-4 text-xs">
+        <input type="hidden" id="modal-sch-id">
+        
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Pengumuman</label>
+          <input type="text" id="modal-sch-name" required placeholder="Contoh: Jam Masuk Kerja" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Jam Eksekusi (24 Jam)</label>
+            <input type="time" id="modal-sch-time" required class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pilih File Audio</label>
+            <select id="modal-sch-audio" required class="media-select-options w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none"></select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Hari Aktif</label>
+          <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="monday" checked class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Sen</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="tuesday" checked class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Sel</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="wednesday" checked class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Rab</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="thursday" checked class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Kam</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="friday" checked class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Jum</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="saturday" class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Sab</span>
+            </label>
+            <label class="flex items-center space-x-1 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+              <input type="checkbox" name="sch-days" value="sunday" class="rounded text-brand-600">
+              <span class="text-[11px] font-medium">Min</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" id="modal-sch-holidays" checked class="rounded text-brand-600">
+            <span class="text-xs text-slate-600 dark:text-slate-300">Lewati saat Hari Libur Resmi</span>
+          </label>
+          <div class="flex space-x-2">
+            <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-xs font-semibold">Batal</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-600/20">Simpan</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- INLINE CLIENT SCRIPT -->
+  <script>
+    let globalMediaFiles = [];
+    let nextRunTimestamp = null;
+
+    // --- Tab Switching ---
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+        btn.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      });
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      }
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+      const targetPane = document.getElementById('tab-content-' + tabId);
+      if (targetPane) targetPane.classList.remove('hidden');
+
+      if (tabId === 'schedules') loadSchedules();
+      if (tabId === 'prayer') loadPrayerConfig();
+      if (tabId === 'media') loadMediaList();
+      if (tabId === 'logs') loadActivityLogs();
+      if (tabId === 'settings') loadSettings();
+    }
+
+    // --- Dark Mode ---
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+      document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      document.getElementById('theme-icon-dark').classList.remove('hidden');
+      document.getElementById('theme-icon-light').classList.add('hidden');
+    }
+
+    // --- Live Status & Countdown Poller ---
+    async function updateLiveStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const json = await res.json();
+        if (json.status === 'success') {
+          const d = json.data;
+          // Clock
+          if (d.current_time) {
+            document.getElementById('live-clock').textContent = d.current_time.split(' ')[1] || d.current_time;
+          }
+          document.getElementById('server-tz').textContent = d.timezone === 'Asia/Jakarta' ? 'WIB' : d.timezone;
+          
+          // Diagnostics
+          document.getElementById('diag-audio-device').textContent = d.engine.active_device || 'Default';
+          document.getElementById('diag-jobs-count').textContent = (d.active_jobs_count || 0) + ' Task';
+          
+          // Engine status text
+          const statusText = document.getElementById('engine-status-text');
+          if (d.engine.is_playing) {
+            statusText.textContent = 'Memutar: ' + (d.engine.current_source || 'Audio');
+            statusText.parentElement.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200";
+          } else {
+            statusText.textContent = 'Siaga (Ready)';
+            statusText.parentElement.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+          }
+
+          // Prayer card
+          if (d.today_prayers && d.today_prayers.times) {
+            const pt = d.today_prayers.times;
+            document.getElementById('time-dzuhur').textContent = pt.dzuhur || '--:--';
+            document.getElementById('time-ashar').textContent = pt.ashar || '--:--';
+            document.getElementById('time-maghrib').textContent = pt.maghrib || '--:--';
+            document.getElementById('prayer-city-badge').textContent = (d.today_prayers.city_name || 'Jakarta') + ' (+2m Ihtiyat)';
+            document.getElementById('prayer-source-badge').textContent = (d.today_prayers.source === 'api' ? 'API Online' : 'Offline Astrom');
+          }
+
+          // Next schedule
+          if (d.next_run) {
+            document.getElementById('next-schedule-name').textContent = d.next_run.name;
+            const dt = new Date(d.next_run.next_run_time);
+            document.getElementById('next-schedule-time').textContent = dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            nextRunTimestamp = d.next_run.timestamp * 1000;
+          } else {
+            document.getElementById('next-schedule-name').textContent = 'Tidak ada jadwal terdekat';
+            document.getElementById('next-schedule-time').textContent = '--:--';
+            document.getElementById('next-schedule-countdown').textContent = '00:00:00';
+            nextRunTimestamp = null;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching live status:', e);
+      }
+    }
+
+    // Countdown timer tick
+    setInterval(() => {
+      if (nextRunTimestamp) {
+        const diff = Math.max(0, Math.floor((nextRunTimestamp - Date.now()) / 1000));
+        const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+        const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        document.getElementById('next-schedule-countdown').textContent = `${h}:${m}:${s}`;
+      }
+    }, 1000);
+
+    // --- Schedules API ---
+    async function loadSchedules() {
+      try {
+        const res = await fetch('/api/schedules');
+        const json = await res.json();
+        const tbody = document.getElementById('schedules-table-body');
+        tbody.innerHTML = '';
+        if (json.status === 'success' && json.schedules.length > 0) {
+          json.schedules.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition";
+            const daysBadges = s.days.map(d => `<span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold">${d.slice(0,3).toUpperCase()}</span>`).join(' ');
+            tr.innerHTML = `
+              <td class="px-5 py-3 font-semibold text-slate-900 dark:text-white">${s.name}</td>
+              <td class="px-5 py-3 font-mono font-bold text-brand-600 dark:text-brand-400 text-sm">${s.time}</td>
+              <td class="px-5 py-3 space-x-1">${daysBadges}</td>
+              <td class="px-5 py-3 text-xs text-slate-500">${s.audio_file}</td>
+              <td class="px-5 py-3 text-center">
+                <button onclick="toggleScheduleState('${s.id}')" class="px-2.5 py-1 rounded-full text-xs font-bold ${s.enabled ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}">
+                  ${s.enabled ? 'Aktif' : 'Mati'}
+                </button>
+              </td>
+              <td class="px-5 py-3 text-right space-x-2">
+                <button onclick="editScheduleItem('${s.id}')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </button>
+                <button onclick="deleteScheduleItem('${s.id}')" class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-xs">Belum ada jadwal yang didaftarkan.</td></tr>`;
+        }
+      } catch (e) {
+        console.error('Error loading schedules:', e);
+      }
+    }
+
+    async function toggleScheduleState(schId) {
+      await fetch(`/api/schedules/${schId}/toggle`, { method: 'POST' });
+      loadSchedules();
+      updateLiveStatus();
+    }
+
+    async function deleteScheduleItem(schId) {
+      if (confirm('Hapus jadwal pengumuman ini?')) {
+        await fetch(`/api/schedules/${schId}`, { method: 'DELETE' });
+        loadSchedules();
+        updateLiveStatus();
+      }
+    }
+
+    // Modal Add/Edit
+    function openScheduleModal(sch = null) {
+      document.getElementById('schedule-modal').classList.remove('hidden');
+      document.getElementById('modal-sch-id').value = sch ? sch.id : '';
+      document.getElementById('modal-sch-name').value = sch ? sch.name : '';
+      document.getElementById('modal-sch-time').value = sch ? sch.time : '08:00';
+      document.getElementById('schedule-modal-title').textContent = sch ? 'Edit Jadwal Pengumuman' : 'Tambah Jadwal Pengumuman';
+      
+      const dayCheckboxes = document.querySelectorAll('input[name="sch-days"]');
+      dayCheckboxes.forEach(cb => {
+        cb.checked = sch ? sch.days.includes(cb.value) : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(cb.value);
+      });
+
+      if (sch && sch.audio_file) {
+        document.getElementById('modal-sch-audio').value = sch.audio_file;
+      }
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('schedule-modal').classList.add('hidden');
+    }
+
+    async function editScheduleItem(schId) {
+      const res = await fetch(`/api/schedules/${schId}`);
+      const json = await res.json();
+      if (json.status === 'success') {
+        openScheduleModal(json.schedule);
+      }
+    }
+
+    async function saveScheduleItem() {
+      const id = document.getElementById('modal-sch-id').value;
+      const name = document.getElementById('modal-sch-name').value;
+      const time = document.getElementById('modal-sch-time').value;
+      const audio_file = document.getElementById('modal-sch-audio').value;
+      const skip_holidays = document.getElementById('modal-sch-holidays').checked;
+      
+      const days = [];
+      document.querySelectorAll('input[name="sch-days"]:checked').forEach(cb => days.push(cb.value));
+
+      const payload = { name, time, audio_file, days, skip_holidays };
+      
+      if (id) {
+        await fetch(`/api/schedules/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await fetch('/api/schedules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+      closeScheduleModal();
+      loadSchedules();
+      updateLiveStatus();
+    }
+
+    // --- Media Manager ---
+    async function loadMediaList() {
+      try {
+        const res = await fetch('/api/media');
+        const json = await res.json();
+        const container = document.getElementById('media-list-container');
+        container.innerHTML = '';
+        if (json.status === 'success' && json.files.length > 0) {
+          globalMediaFiles = json.files;
+          document.getElementById('diag-media-count').textContent = json.files.length + ' File';
+          updateMediaDropdowns();
+
+          json.files.forEach(f => {
+            const div = document.createElement('div');
+            div.className = "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
+            div.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 flex items-center justify-center font-bold text-xs">
+                  ${f.filename.split('.').pop().toUpperCase()}
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-slate-900 dark:text-white">${f.filename}</h4>
+                  <p class="text-[11px] text-slate-400">${f.size_mb} MB • Diunggah: ${f.modified.split('T')[0]}</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <audio controls preload="none" class="h-8 max-w-[200px]">
+                  <source src="/api/media/stream/${f.filename}" type="audio/mpeg">
+                </audio>
+                <button onclick="testAudioSpeaker('${f.filename}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-[11px] font-semibold transition" title="Putar ke Speaker Kantor">
+                  Tes Speaker
+                </button>
+                <button onclick="deleteMediaFile('${f.filename}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 transition" title="Hapus File">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            `;
+            container.appendChild(div);
+          });
+        } else {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">Belum ada file media. Silakan upload.</div>`;
+        }
+      } catch (e) {
+        console.error('Error loading media:', e);
+      }
+    }
+
+    function updateMediaDropdowns() {
+      document.querySelectorAll('.media-select-options').forEach(select => {
+        const currentVal = select.value;
+        select.innerHTML = '';
+        globalMediaFiles.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.filename;
+          opt.textContent = f.filename;
+          select.appendChild(opt);
+        });
+        if (currentVal) select.value = currentVal;
+      });
+    }
+
+    async function uploadAudioFile(input) {
+      if (!input.files || input.files.length === 0) return;
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+      
+      const res = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        alert('File audio ' + json.filename + ' berhasil diunggah!');
+        loadMediaList();
+      } else {
+        alert('Gagal upload: ' + json.message);
+      }
+      input.value = '';
+    }
+
+    async function deleteMediaFile(filename) {
+      if (confirm(`Hapus file audio ${filename}?`)) {
+        await fetch(`/api/media/${filename}`, { method: 'DELETE' });
+        loadMediaList();
+      }
+    }
+
+    async function testAudioSpeaker(filename) {
+      await fetch('/api/audio/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: filename, prepend_chime: false })
+      });
+      updateLiveStatus();
+    }
+
+    // --- Prayer Configurations ---
+    async function loadPrayerConfig() {
+      try {
+        const res = await fetch('/api/prayer');
+        const json = await res.json();
+        if (json.status === 'success') {
+          const c = json.config;
+          document.getElementById('prayer-master-enabled').checked = !!c.enabled;
+          document.getElementById('prayer-city-id').value = c.city_id || '1301';
+          document.getElementById('prayer-city-name').value = c.city_name || 'Kota Jakarta';
+          document.getElementById('prayer-reminder-offset').value = c.reminder_offset_minutes || 2;
+          document.getElementById('prayer-latitude').value = c.latitude || -6.2088;
+          document.getElementById('prayer-longitude').value = c.longitude || 106.8456;
+
+          document.getElementById('prayer-dzuhur-enabled').checked = !!c.dzuhur_enabled;
+          document.getElementById('prayer-dzuhur-audio').value = c.dzuhur_audio_file || 'pre_adzan.mp3';
+
+          document.getElementById('prayer-ashar-enabled').checked = !!c.ashar_enabled;
+          document.getElementById('prayer-ashar-audio').value = c.ashar_audio_file || 'pre_adzan.mp3';
+
+          document.getElementById('prayer-maghrib-enabled').checked = !!c.maghrib_enabled;
+          document.getElementById('prayer-maghrib-audio').value = c.maghrib_audio_file || 'pre_adzan.mp3';
+        }
+      } catch (e) {
+        console.error('Error loading prayer config:', e);
+      }
+    }
+
+    async function savePrayerConfig() {
+      const payload = {
+        enabled: document.getElementById('prayer-master-enabled').checked,
+        city_id: document.getElementById('prayer-city-id').value,
+        city_name: document.getElementById('prayer-city-name').value,
+        reminder_offset_minutes: parseInt(document.getElementById('prayer-reminder-offset').value) || 2,
+        latitude: parseFloat(document.getElementById('prayer-latitude').value) || -6.2088,
+        longitude: parseFloat(document.getElementById('prayer-longitude').value) || 106.8456,
+        dzuhur_enabled: document.getElementById('prayer-dzuhur-enabled').checked,
+        dzuhur_audio_file: document.getElementById('prayer-dzuhur-audio').value,
+        ashar_enabled: document.getElementById('prayer-ashar-enabled').checked,
+        ashar_audio_file: document.getElementById('prayer-ashar-audio').value,
+        maghrib_enabled: document.getElementById('prayer-maghrib-enabled').checked,
+        maghrib_audio_file: document.getElementById('prayer-maghrib-audio').value
+      };
+
+      const res = await fetch('/api/prayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        alert('Pengaturan pengingat sholat berhasil disimpan!');
+        updateLiveStatus();
+      }
+    }
+
+    // --- Activity Logs ---
+    async function loadActivityLogs() {
+      try {
+        const res = await fetch('/api/logs?limit=50');
+        const json = await res.json();
+        const tbody = document.getElementById('logs-table-body');
+        tbody.innerHTML = '';
+        if (json.status === 'success' && json.logs.length > 0) {
+          json.logs.forEach(l => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+            tr.innerHTML = `
+              <td class="px-4 py-2.5 text-slate-400 text-[11px]">${l.timestamp.replace('T', ' ').split('.')[0]}</td>
+              <td class="px-4 py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800">${l.event_type.toUpperCase()}</span></td>
+              <td class="px-4 py-2.5 font-sans font-semibold text-slate-800 dark:text-slate-200">${l.source || '-'}</td>
+              <td class="px-4 py-2.5 text-slate-500">${l.audio_file || '-'}</td>
+              <td class="px-4 py-2.5 text-slate-400 text-[11px]">${l.audio_device || 'Default'}</td>
+              <td class="px-4 py-2.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${l.status === 'success' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'}">${l.status.toUpperCase()}</span>
+              </td>
+              <td class="px-4 py-2.5 text-slate-500 font-sans text-[11px]">${l.message || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-6 text-center text-slate-400 text-xs">Belum ada riwayat aktivitas.</td></tr>`;
+        }
+      } catch (e) {
+        console.error('Error loading logs:', e);
+      }
+    }
+
+    // --- Settings ---
+    async function loadSettings() {
+      try {
+        const [resSet, resDev] = await Promise.all([
+          fetch('/api/settings'),
+          fetch('/api/devices')
+        ]);
+        const jsonSet = await resSet.json();
+        const jsonDev = await resDev.json();
+
+        if (jsonDev.status === 'success') {
+          const sel = document.getElementById('settings-audio-device');
+          sel.innerHTML = '<option value="">Default System Output Device</option>';
+          jsonDev.devices.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.name;
+            opt.textContent = `${d.name} (${d.channels} ch)`;
+            sel.appendChild(opt);
+          });
+          if (jsonSet.settings.audio_device) {
+            sel.value = jsonSet.settings.audio_device;
+          }
+        }
+
+        if (jsonSet.status === 'success') {
+          const s = jsonSet.settings;
+          document.getElementById('settings-timezone').value = s.timezone || 'Asia/Jakarta';
+          document.getElementById('settings-volume').value = Math.round((s.volume || 0.85) * 100);
+          document.getElementById('volume-label').textContent = Math.round((s.volume || 0.85) * 100) + '%';
+          document.getElementById('settings-prepend-chime').checked = !!s.prepend_chime;
+          document.getElementById('settings-autostart').checked = !!s.auto_start_on_boot;
+          document.getElementById('settings-chime-file').value = s.chime_file || 'chime.mp3';
+        }
+      } catch (e) {
+        console.error('Error loading settings:', e);
+      }
+    }
+
+    async function saveSystemSettings() {
+      const payload = {
+        audio_device: document.getElementById('settings-audio-device').value || null,
+        timezone: document.getElementById('settings-timezone').value,
+        volume: parseFloat(document.getElementById('settings-volume').value) / 100.0,
+        prepend_chime: document.getElementById('settings-prepend-chime').checked,
+        auto_start_on_boot: document.getElementById('settings-autostart').checked,
+        chime_file: document.getElementById('settings-chime-file').value
+      };
+
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        alert('Pengaturan sistem berhasil disimpan!');
+        updateLiveStatus();
+      }
+    }
+
+    async function importBackupJSON(input) {
+      if (!input.files || input.files.length === 0) return;
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+      
+      const res = await fetch('/api/backup/import', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (json.status === 'success') {
+        alert(json.message);
+        location.reload();
+      } else {
+        alert('Gagal restore: ' + json.message);
+      }
+      input.value = '';
+    }
+
+    // --- Quick Triggers ---
+    async function triggerEmergencyBroadcast() {
+      if (confirm('PERINGATAN: Bunyikan Sirene & Pengumuman Darurat (Emergency Broadcast) sekarang dengan volume maksimal?')) {
+        await fetch('/api/audio/emergency', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_name: 'emergency.mp3' })
+        });
+        updateLiveStatus();
+      }
+    }
+
+    async function testSelectedDevice() {
+      const selectedDev = document.getElementById('settings-audio-device').value || null;
+      await fetch('/api/audio/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: 'chime.mp3', prepend_chime: false, device: selectedDev })
+      });
+      alert('Memutar tes audio ke device: ' + (selectedDev || 'Default System Device'));
+      updateLiveStatus();
+    }
+
+    async function testChimePlayback() {
+      const currentDev = document.getElementById('settings-audio-device') ? document.getElementById('settings-audio-device').value : null;
+      await fetch('/api/audio/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: 'chime.mp3', prepend_chime: false, device: currentDev })
+      });
+      updateLiveStatus();
+    }
+
+    // --- Init ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadMediaList();
+      await loadSchedules();
+      await updateLiveStatus();
+      setInterval(updateLiveStatus, 5000);
+    });
+  </script>
+</body>
+</html>

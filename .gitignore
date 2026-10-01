@@ -1,0 +1,43 @@
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# PyInstaller build outputs
+build/
+dist/
+*.spec.bak
+Release_App/
+Release_Package/
+
+# SQLite runtime temporary/lock files (keep clean data.db if needed or ignore local db)
+data.db-wal
+data.db-shm
+*.db-journal
+
+# Logs
+logs/*.log
+logs/
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo

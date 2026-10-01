@@ -1,0 +1,13 @@
+Flask>=3.0.0
+APScheduler>=3.10.4
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.26.0
+pydub>=0.25.1
+adhanpy>=1.0.5
+requests>=2.31.0
+pystray>=0.19.5
+Pillow>=10.0.0
+plyer>=2.1.0
+pytz>=2024.1
+pyinstaller>=6.4.0

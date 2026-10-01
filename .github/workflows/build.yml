@@ -1,0 +1,43 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build Executable with PyInstaller
+      run: |
+        pyinstaller build_windows.spec
+
+    - name: Prepare Release Package
+      shell: bash
+      run: |
+        mkdir -p Release_Package/media
+        cp dist/SmartOfficeAnnouncer.exe Release_Package/
+        cp config.json Release_Package/
+        cp -r media/* Release_Package/media/
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: SmartOfficeAnnouncer_Windows_Ready
+        path: Release_Package/

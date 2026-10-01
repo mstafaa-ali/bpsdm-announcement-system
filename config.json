@@ -1,0 +1,12 @@
+{
+  "system_settings": {
+    "port": 5050,
+    "timezone": "Asia/Jakarta",
+    "volume": 0.85,
+    "prepend_chime": true,
+    "chime_file": "chime.mp3",
+    "audio_device": null,
+    "auto_open_browser": true,
+    "auto_start_on_boot": true
+  }
+}
