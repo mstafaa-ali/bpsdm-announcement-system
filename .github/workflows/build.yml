@@ -40,7 +40,7 @@ jobs:
         cp -r media/* Release_Package/media/
         
         # Zip the package for release download
-        powershell Compress-Archive -Path Release_Package/* -DestinationPath SmartOfficeAnnouncer_Windows_Ready.zip -Force
+        tar -a -c -f SmartOfficeAnnouncer_Windows_Ready.zip -C Release_Package .
 
     - name: Upload Artifact (Actions Tab)
       uses: actions/upload-artifact@v4
