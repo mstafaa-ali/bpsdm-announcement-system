@@ -227,6 +227,26 @@ class AudioEngine:
         )
         self._queue.put(task)
 
+    def stop(self) -> bool:
+        """Immediately stops any currently playing audio and flushes the queue."""
+        logger.info("[AudioEngine] Stopping audio playback and clearing queue...")
+        try:
+            sd.stop()
+            with self._queue.mutex:
+                self._queue.queue.clear()
+            self._is_playing = False
+            self._current_source = None
+            log_activity(
+                event_type="playback",
+                source="Manual Action",
+                status="stopped",
+                message="Pemutaran audio dihentikan oleh pengguna (Stop Audio)"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"[AudioEngine] Error stopping audio: {e}")
+            return False
+
     def is_busy(self) -> bool:
         return self._is_playing or not self._queue.empty()
 

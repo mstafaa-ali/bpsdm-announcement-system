@@ -74,6 +74,7 @@ Membangun sistem pengumuman audio kantor otomatis berbasis perangkat lunak mandi
 * **FR-3.5 (Audio Device Selection):** Admin dapat memilih audio output device dari dashboard. Sistem menampilkan daftar audio output device yang terdeteksi oleh OS dan memungkinkan pemilihan device spesifik (bukan hanya default OS).
 * **FR-3.6 (Audio Device Health Check):** Sistem secara periodik memeriksa ketersediaan audio output device yang dipilih. Jika device tidak terdeteksi (dicabut, berubah setelah restart), sistem menampilkan alert/warning di dashboard dan mencatat event ke log.
 * **FR-3.7 (Audio Preview):** Admin dapat memutar preview file audio langsung dari browser dashboard sebelum file dijadwalkan, untuk memverifikasi konten dan kualitas audio.
+* **FR-3.8 (Audio Stop / Manual Interrupt):** Tombol aksi langsung pada antarmuka dashboard untuk menghentikan (*stop/cancel*) audio yang sedang diputar di speaker secara instan serta mengosongkan antrean pemutaran jika ada.
 
 ### FR-4: Local Web UI Dashboard
 

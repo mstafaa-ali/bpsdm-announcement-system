@@ -107,7 +107,15 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center space-x-2.5">
+      <div class="flex items-center space-x-2 sm:space-x-2.5">
+        <!-- Stop Audio Button -->
+        <button id="btn-stop-audio" onclick="stopAudioPlayback()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 active:scale-95 text-xs font-bold border border-slate-200 dark:border-slate-700 transition" title="Hentikan audio yang sedang diputar">
+          <svg class="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+          <span id="btn-stop-audio-text">Stop</span>
+        </button>
+
         <!-- Emergency Button -->
         <button id="btn-emergency" onclick="triggerEmergencyBroadcast()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition">
           <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -719,14 +727,29 @@
           document.getElementById('diag-audio-device').textContent = d.engine.active_device || 'Default';
           document.getElementById('diag-jobs-count').textContent = (d.active_jobs_count || 0) + ' Task';
           
-          // Engine status text
+          // Engine status text & Stop button
           const statusText = document.getElementById('engine-status-text');
+          const stopBtn = document.getElementById('btn-stop-audio');
+          const stopBtnText = document.getElementById('btn-stop-audio-text');
+
           if (d.engine.is_playing) {
             statusText.textContent = 'Memutar: ' + (d.engine.current_source || 'Audio');
             statusText.parentElement.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200";
+            
+            // Highlight Stop Button
+            if (stopBtn) {
+              stopBtn.className = "inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-rose-600/40 animate-pulse transition";
+              stopBtnText.textContent = "Hentikan Suara";
+            }
           } else {
             statusText.textContent = 'Siaga (Ready)';
             statusText.parentElement.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+            
+            // Default Stop Button
+            if (stopBtn) {
+              stopBtn.className = "inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 active:scale-95 text-xs font-bold border border-slate-200 dark:border-slate-700 transition";
+              stopBtnText.textContent = "Stop";
+            }
           }
 
           // Prayer card
@@ -1144,6 +1167,12 @@
     }
 
     // --- Quick Triggers ---
+    async function stopAudioPlayback() {
+      const res = await fetch('/api/audio/stop', { method: 'POST' });
+      const json = await res.json();
+      updateLiveStatus();
+    }
+
     async function triggerEmergencyBroadcast() {
       if (confirm('PERINGATAN: Bunyikan Sirene & Pengumuman Darurat (Emergency Broadcast) sekarang dengan volume maksimal?')) {
         await fetch('/api/audio/emergency', {

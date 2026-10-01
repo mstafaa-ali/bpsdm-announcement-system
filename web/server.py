@@ -240,6 +240,13 @@ def create_app() -> Flask:
         log_activity("playback", "Emergency Broadcast", audio_file=file_name, status="success", message="EMERGENCY BROADCAST TRIGGERED!")
         return jsonify({"status": "success", "message": "Peringatan darurat (Emergency Broadcast) diaktifkan!"})
 
+    @app.route("/api/audio/stop", methods=["POST"])
+    def stop_audio():
+        success = audio_engine.stop()
+        if success:
+            return jsonify({"status": "success", "message": "Pemutaran audio berhasil dihentikan."})
+        return jsonify({"status": "error", "message": "Gagal menghentikan audio."}), 500
+
     # --- Activity Logs API ---
 
     @app.route("/api/logs", methods=["GET"])

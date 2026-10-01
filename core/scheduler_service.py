@@ -27,7 +27,11 @@ DAY_MAPPING = {
 
 class SchedulerService:
     def __init__(self):
-        self.scheduler = BackgroundScheduler()
+        job_defaults = {
+            'coalesce': True,
+            'misfire_grace_time': 60  # Tolerate up to 60 seconds delay after wake up
+        }
+        self.scheduler = BackgroundScheduler(job_defaults=job_defaults)
         self._today_prayer_data: Optional[Dict[str, Any]] = None
         self._next_job_info: Optional[Dict[str, Any]] = None
 
