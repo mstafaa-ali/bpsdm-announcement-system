@@ -1,9 +1,12 @@
-name: Build Windows EXE
+name: Build & Release Windows EXE
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
@@ -35,9 +38,35 @@ jobs:
         cp dist/SmartOfficeAnnouncer.exe Release_Package/
         cp config.json Release_Package/
         cp -r media/* Release_Package/media/
+        
+        # Zip the package for release download
+        powershell Compress-Archive -Path Release_Package/* -DestinationPath SmartOfficeAnnouncer_Windows_Ready.zip -Force
 
-    - name: Upload Artifact
+    - name: Upload Artifact (Actions Tab)
       uses: actions/upload-artifact@v4
       with:
         name: SmartOfficeAnnouncer_Windows_Ready
         path: Release_Package/
+
+    - name: Publish to GitHub Releases
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v2.0.0
+        name: "Smart Office Announcer v2.0.0 (Windows Portable)"
+        body: |
+          ### 📢 Smart Office Announcement & Prayer Alert System
+          
+          **Aplikasi Desktop Mandiri (.EXE) untuk Windows 10 / 11**
+          - Zero-dependency (tidak perlu install Python di PC kantor).
+          - Sudah termasuk starter audio pengumuman & adzan.
+          
+          #### 📥 Cara Menggunakan:
+          1. Unduh file `SmartOfficeAnnouncer_Windows_Ready.zip` di bawah ini.
+          2. Ekstrak file zip ke folder pilihan di PC kantor (misal: `C:\SmartOfficeAnnouncer`).
+          3. Jalankan `SmartOfficeAnnouncer.exe`.
+          4. Buka browser di `http://127.0.0.1:5050` untuk mengelola jadwal.
+        files: SmartOfficeAnnouncer_Windows_Ready.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
