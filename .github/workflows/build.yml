@@ -46,12 +46,14 @@ jobs:
     - name: Publish to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v2.0.1
-        name: "Smart Office Announcer v2.0.1 (Native App Window - Go Engine)"
+        tag_name: v2.0.2
+        name: "Smart Office Announcer v2.0.2 (Fix Startup & Native App Window)"
         body: |
-          ### 📢 Smart Office Announcement & Prayer Alert System v2.0.1
+          ### 📢 Smart Office Announcement & Prayer Alert System v2.0.2
           
           **Aplikasi Desktop Mandiri (.EXE) untuk Windows 10 / 11**
+          - 🛠️ **Fix Startup & System Tray**: Perbaikan inisialisasi background service dan file path resolution saat diekstrak di Windows.
+          - 📝 **Log Otomatis**: Sekarang otomatis mencatat log ke file `logs/announcer.log` untuk memudahkan diagnosa.
           - ✨ **Native App Window**: Langsung terbuka sebagai jendela aplikasi Windows tersendiri (tanpa tab atau address bar browser).
           - ⚡ **Zero-Dependency**: Pure Go, tidak membutuhkan instalasi Python runtime.
           - 🪶 **Ultra-Ringan**: Sangat hemat RAM (~25-35 MB) dan CPU 0% saat idle, optimal untuk PC spek kantor/kentang.

@@ -26,8 +26,8 @@ func resolveAppDir() string {
 	exePath, err := os.Executable()
 	if err == nil {
 		exeDir := filepath.Dir(exePath)
-		// If running via `go run`, executable is placed in a temp folder
-		if !strings.Contains(exeDir, "go-build") && !strings.Contains(exeDir, "var/folders") && !strings.Contains(exeDir, "AppData\\Local\\Temp") {
+		// If running via `go run`, executable is placed in a temp folder with 'go-build'
+		if !strings.Contains(exeDir, "go-build") {
 			return exeDir
 		}
 	}

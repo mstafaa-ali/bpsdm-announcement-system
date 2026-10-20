@@ -4,11 +4,13 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -47,6 +49,12 @@ func main() {
 		log.Fatalf("[Main] Gagal menginisialisasi folder aplikasi: %v", err)
 	}
 
+	// Persist logs to disk (crucial for headless Windows GUI apps)
+	logFilePath := filepath.Join(paths.LogsDir, "announcer.log")
+	if f, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+		log.SetOutput(io.MultiWriter(os.Stdout, f))
+	}
+
 	if err := database.InitDB(); err != nil {
 		log.Fatalf("[Main] Gagal menginisialisasi database: %v", err)
 	}
@@ -72,12 +80,12 @@ func main() {
 		close(shutdownChan)
 	})
 
-	// 6. Delayed auto-open browser
+	// 6. Fast auto-open application window
 	if settings.AutoOpenBrowser {
 		go func() {
-			time.Sleep(1200 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 			url := fmt.Sprintf("http://127.0.0.1:%d", port)
-			log.Printf("[Main] Membuka dashboard web di %s...\n", url)
+			log.Printf("[Main] Membuka jendela aplikasi di %s...\n", url)
 			tray.OpenBrowser(url)
 		}()
 	}

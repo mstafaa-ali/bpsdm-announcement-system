@@ -26,7 +26,15 @@ func StartTray(port int, onExit func()) {
 		onExit: onExit,
 	}
 
-	go systray.Run(m.onReady, m.onExitClean)
+	go func() {
+		runtime.LockOSThread()
+		defer func() {
+			if r := recover(); r != nil {
+				// Prevent systray panic from crashing the application
+			}
+		}()
+		systray.Run(m.onReady, nil)
+	}()
 }
 
 func (m *TrayManager) onReady() {
