@@ -46,21 +46,23 @@ jobs:
     - name: Publish to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v2.0.0
-        name: "Smart Office Announcer v2.0.0 (Go Engine - Ultra Lightweight)"
+        tag_name: v2.0.1
+        name: "Smart Office Announcer v2.0.1 (Native App Window - Go Engine)"
         body: |
-          ### 📢 Smart Office Announcement & Prayer Alert System (Go Engine)
+          ### 📢 Smart Office Announcement & Prayer Alert System v2.0.1
           
           **Aplikasi Desktop Mandiri (.EXE) untuk Windows 10 / 11**
-          - Zero-dependency (Pure Go, tidak membutuhkan Python runtime).
-          - Sangat ringan, cepat, dan hemat RAM/CPU untuk PC spek kantor/kentang.
-          - Sudah termasuk starter audio pengumuman & adzan.
+          - ✨ **Native App Window**: Langsung terbuka sebagai jendela aplikasi Windows tersendiri (tanpa tab atau address bar browser).
+          - ⚡ **Zero-Dependency**: Pure Go, tidak membutuhkan instalasi Python runtime.
+          - 🪶 **Ultra-Ringan**: Sangat hemat RAM (~25-35 MB) dan CPU 0% saat idle, optimal untuk PC spek kantor/kentang.
+          - 🛡️ **Anti-Mati**: Jika jendela aplikasi ditutup oleh user via tombol `X`, jadwal pengumuman & adzan tetap aktif berbunyi di latar belakang (System Tray).
+          - 🎵 Sudah termasuk starter audio pengumuman & adzan di folder `media/`.
           
           #### 📥 Cara Menggunakan:
           1. Unduh file `SmartOfficeAnnouncer_Windows_Ready.zip` di bawah ini.
           2. Ekstrak file zip ke folder pilihan di PC kantor (misal: `C:\SmartOfficeAnnouncer`).
           3. Jalankan `SmartOfficeAnnouncer.exe`.
-          4. Buka browser di `http://127.0.0.1:5050` untuk mengelola jadwal pengumuman & sholat.
+          4. Jendela aplikasi desktop akan langsung terbuka otomatis.
         files: SmartOfficeAnnouncer_Windows_Ready.zip
         draft: false
         prerelease: false
