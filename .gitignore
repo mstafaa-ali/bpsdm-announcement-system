@@ -11,12 +11,15 @@ __pycache__/
 *.so
 .Python
 
-# PyInstaller build outputs
+# PyInstaller & Go build outputs
 build/
 dist/
 *.spec.bak
 Release_App/
+Release_App_Go/
 Release_Package/
+announcer_mac
+*.exe
 
 # SQLite runtime temporary/lock files (keep clean data.db if needed or ignore local db)
 data.db-wal

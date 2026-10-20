@@ -1,6 +1,6 @@
-# 📢 Smart Office Announcement & Prayer Alert System
+# 📢 Smart Office Announcement & Prayer Alert System (Go Engine)
 
-Aplikasi pemutar pengumuman kantor dan pengingat waktu sholat otomatis berbasis desktop portabel (`.exe`) mandiri (*zero-dependency* di sisi klien) dengan dashboard web lokal yang modern dan responsif.
+Aplikasi pemutar pengumuman kantor dan pengingat waktu sholat otomatis berbasis desktop portabel (`.exe`) mandiri (*zero-dependency* di sisi klien) dengan arsitektur **Go Engine** yang sangat ringan, hemat memori RAM, dan optimal untuk PC spesifikasi terbatas (PC kentang).
 
 ---
 
@@ -16,26 +16,27 @@ Aplikasi pemutar pengumuman kantor dan pengingat waktu sholat otomatis berbasis 
    - Sinkronisasi harian otomatis pukul `00:01:00`.
    - **Multi-Source Resilience**:
      - *Primary:* REST API Kemenag / MyQuran.
-     - *Secondary (Offline Fallback):* Kalkulasi astronomi MABIMS / Kemenag menggunakan koordinat GPS via `adhanpy`.
+     - *Secondary (Offline Fallback):* Kalkulasi astronomi MABIMS / Kemenag menggunakan algoritma koordinat hisab GPS bawaan (murni Go, tanpa library eksternal).
    - Waktu pengaman (*Ihtiyat* +2 menit default).
-   - Fitur peringatan awal (*Pre-Alert T-Minus*, misal 10 menit sebelum masuk waktu sholat).
+   - Fitur pengingat pra-adzan (T-2 menit sebelum waktu sholat).
 
-3. **Audio Engine & Device Selection**
-   - Mendukung format `.mp3`, `.wav`, `.ogg`, `.flac`.
+3. **Audio Engine Berkecepatan Tinggi**
+   - Mendukung format `.mp3` dan `.wav`.
+   - Decoder audio internal murni Go (`go-mp3` & RIFF parser, tanpa CGO).
    - **Audio Device Enumeration**: Memilih sound card / port audio output spesifik yang terhubung ke PA Central Amplifier.
    - Penanganan tabrakan jadwal (*FIFO Queue*) untuk mencegah audio tumpang tindih.
-   - Tombol **Emergency Broadcast** (sirene darurat pada volume maksimal).
+   - Tombol **Emergency Broadcast** (sirene darurat pada volume maksimal) dan tombol **Stop Audio**.
 
 4. **Penyimpanan Data Andal & Tahan Crash**
    - **Hybrid Storage**:
-     - `config.json` (Atomic Write) untuk pengaturan sistem dasar.
-     - **SQLite (`data.db`)** dengan mode **WAL (Write-Ahead Logging)** untuk menjamin konsistensi data saat mati listrik mendadak.
+     - `config.json` untuk konfigurasi sistem utama.
+     - **SQLite (`data.db`)** dengan mode **WAL (Write-Ahead Logging)** menggunakan pure-Go driver (`modernc.org/sqlite`) yang tahan terhadap mati listrik mendadak.
 
 5. **Desktop & System Integration**
-   - **Auto-Start on Boot**: Otomatis aktif saat Windows menyala / restart.
-   - **System Tray Icon**: Berjalan di background dengan menu buka dashboard & keluar.
-   - **Desktop Toast Notification**: Notifikasi visual saat pengumuman diputar.
-   - **Backup & Restore**: Ekspor dan impor seluruh konfigurasi ke file `.json`.
+   - **Auto-Start on Boot**: Registrasi otomatis ke Windows Registry (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
+   - **System Tray Icon**: Berjalan di latar belakang dengan menu buka dashboard & keluar.
+   - **Desktop Toast Notification**: Notifikasi visual Windows Toast saat pengumuman diputar.
+   - **Backup & Restore**: Ekspor dan impor konfigurasi lengkap via file `.json`.
 
 ---
 
@@ -43,9 +44,10 @@ Aplikasi pemutar pengumuman kantor dan pengingat waktu sholat otomatis berbasis 
 
 ```
 📁 announcer/
-├── announcer.exe              ← Binary utama (PyInstaller --onefile)
+├── SmartOfficeAnnouncer.exe   ← Binary utama (hasil build Go)
 ├── config.json                ← Pengaturan port, volume, timezone, chime
-├── data.db                    ← SQLite: jadwal statis, prayer config, logs
+├── data.db                    ← SQLite: jadwal statis, prayer config, activity logs
+├── 📁 internal/               ← Modul backend Go (audio, database, prayer, scheduler, server, tray)
 ├── 📁 media/                  ← File audio pengumuman & adzan (.mp3, .wav)
 │   ├── chime.mp3
 │   ├── adzan_dzuhur.mp3
@@ -56,40 +58,47 @@ Aplikasi pemutar pengumuman kantor dan pengingat waktu sholat otomatis berbasis 
 │   ├── istirahat.mp3
 │   ├── pulang_kantor.mp3
 │   └── emergency.mp3
-└── 📁 logs/                   ← Rotating log files (maks 5MB)
-    └── announcer.log
+├── 📁 templates/              ← Web Dashboard UI (index.html)
+├── 📁 logs/                   ← Log aktivitas sistem
+├── build_go_windows.bat       ← Script build Go di Windows
+├── build_cross_windows.sh     ← Script cross-compile Windows .exe dari Mac/Linux
+└── run_app.bat                ← Shortcut untuk menjalankan aplikasi di Windows
 ```
 
 ---
 
 ## 🚀 Cara Menjalankan dalam Mode Pengembangan (Development)
 
-1. Pastikan Python 3.11+ terpasang:
+1. Pastikan **Go 1.22+** sudah terpasang di komputer:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # atau venv\Scripts\activate di Windows
-   pip install -r requirements.txt
+   go version
    ```
 
-2. Jalankan aplikasi:
+2. Jalankan aplikasi langsung dari terminal:
    ```bash
-   python main.py
+   go run main.go
    ```
 
 3. Buka browser di:
    ```
-   http://127.0.0.1:5000
+   http://127.0.0.1:5050
    ```
 
 ---
 
 ## 📦 Cara Membangun Executable Windows (.exe)
 
-Jalankan perintah PyInstaller menggunakan file `.spec` yang sudah dikonfigurasi:
-
-```bash
-pyinstaller build_windows.spec
+### Opsi A: Membangun di Komputer Windows
+Cukup jalankan file:
+```cmd
+build_go_windows.bat
 ```
+Script akan mengompilasi binary Windows mandiri (tanpa dependensi CGO) ke dalam folder `Release_App_Go\`.
 
-Hasil file `.exe` mandiri akan berada di dalam folder `dist/SmartOfficeAnnouncer.exe`.
-Letakkan file tersebut bersama folder `media/` untuk mendistribusikan ke PC kantor.
+### Opsi B: Cross-Compile dari Mac / Linux
+Jalankan script bash:
+```bash
+./build_cross_windows.sh
+```
+Binary Windows `SmartOfficeAnnouncer.exe` akan langsung terbuat di folder `Release_App_Go\`.
+Folder `Release_App_Go` bersifat portabel dan dapat langsung disalin ke PC kantor.
