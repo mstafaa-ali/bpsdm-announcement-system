@@ -15,9 +15,13 @@ type TrayManager struct {
 	onExit func()
 }
 
+// StartTray blocks the calling thread running the system tray event loop.
+// It MUST be called from the main goroutine on Windows (Cocoa/Win32 requirement).
+// On macOS (development), it is a no-op so the app runs as a CLI service.
 func StartTray(port int, onExit func()) {
 	if runtime.GOOS == "darwin" {
-		// macOS Cocoa requires NSApplication to run on main thread; skip on dev Mac CLI
+		// macOS Cocoa requires NSApplication to run on the main OS thread.
+		// On dev Macs we skip tray so the server runs normally as a CLI process.
 		return
 	}
 
@@ -26,15 +30,10 @@ func StartTray(port int, onExit func()) {
 		onExit: onExit,
 	}
 
-	go func() {
-		runtime.LockOSThread()
-		defer func() {
-			if r := recover(); r != nil {
-				// Prevent systray panic from crashing the application
-			}
-		}()
-		systray.Run(m.onReady, nil)
-	}()
+	// systray.Run BLOCKS until Quit is called. It must run on the OS main thread.
+	// We call this directly (not inside a goroutine) so the caller's goroutine
+	// (main.go's main()) is dedicated to the tray loop.
+	systray.Run(m.onReady, m.onExitClean)
 }
 
 func (m *TrayManager) onReady() {
@@ -59,9 +58,6 @@ func (m *TrayManager) onReady() {
 				OpenBrowser(url)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
-				if m.onExit != nil {
-					m.onExit()
-				}
 				return
 			}
 		}

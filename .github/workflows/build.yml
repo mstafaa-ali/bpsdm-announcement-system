@@ -46,25 +46,34 @@ jobs:
     - name: Publish to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v2.0.2
-        name: "Smart Office Announcer v2.0.2 (Fix Startup & Native App Window)"
+        tag_name: v2.0.3
+        name: "Smart Office Announcer v2.0.3 (Fix System Tray & App Window)"
         body: |
-          ### 📢 Smart Office Announcement & Prayer Alert System v2.0.2
-          
+          ### 📢 Smart Office Announcement & Prayer Alert System v2.0.3
+
           **Aplikasi Desktop Mandiri (.EXE) untuk Windows 10 / 11**
-          - 🛠️ **Fix Startup & System Tray**: Perbaikan inisialisasi background service dan file path resolution saat diekstrak di Windows.
-          - 📝 **Log Otomatis**: Sekarang otomatis mencatat log ke file `logs/announcer.log` untuk memudahkan diagnosa.
-          - ✨ **Native App Window**: Langsung terbuka sebagai jendela aplikasi Windows tersendiri (tanpa tab atau address bar browser).
-          - ⚡ **Zero-Dependency**: Pure Go, tidak membutuhkan instalasi Python runtime.
-          - 🪶 **Ultra-Ringan**: Sangat hemat RAM (~25-35 MB) dan CPU 0% saat idle, optimal untuk PC spek kantor/kentang.
-          - 🛡️ **Anti-Mati**: Jika jendela aplikasi ditutup oleh user via tombol `X`, jadwal pengumuman & adzan tetap aktif berbunyi di latar belakang (System Tray).
-          - 🎵 Sudah termasuk starter audio pengumuman & adzan di folder `media/`.
-          
+
+          #### 🔧 Perbaikan Kritis v2.0.3:
+          - 🐛 **Fix System Tray Tidak Muncul**: Perbaikan arsitektur threading — `systray` sekarang berjalan di main thread sesuai requirement Win32 API. Ini adalah root cause mengapa app tidak terlihat setelah dijalankan.
+          - 🪟 **Fix App Window Tidak Terbuka**: Startup flow diperbaiki, window app kini muncul otomatis setelah ±500ms.
+          - 🔌 **Fix Shutdown**: Tombol "Keluar" di system tray kini benar-benar menutup seluruh proses.
+          - 🛡️ **Graceful Shutdown**: Signal OS (Ctrl+C) dan tray quit keduanya menghentikan server & scheduler dengan aman.
+
+          #### ✨ Fitur Lengkap:
+          - ✅ **System Tray**: Ikon di pojok kanan bawah taskbar. Klik untuk buka dashboard atau keluar.
+          - ✅ **Native App Window**: Dashboard terbuka sebagai window mandiri (tanpa tab/address bar browser).
+          - ✅ **Zero-Dependency**: Pure Go, tidak membutuhkan Python runtime.
+          - ✅ **Ultra-Ringan**: ~25-35 MB RAM, CPU 0% saat idle.
+          - ✅ **Anti-Mati**: Menutup jendela (tombol X) tidak mematikan jadwal — tetap berjalan di system tray.
+          - ✅ **Log Otomatis**: Log tersimpan di `logs/announcer.log` untuk memudahkan diagnosa.
+          - ✅ **Auto-Start Windows**: Bisa dikonfigurasi untuk auto-start saat Windows menyala.
+
           #### 📥 Cara Menggunakan:
           1. Unduh file `SmartOfficeAnnouncer_Windows_Ready.zip` di bawah ini.
-          2. Ekstrak file zip ke folder pilihan di PC kantor (misal: `C:\SmartOfficeAnnouncer`).
+          2. Ekstrak file zip ke folder pilihan (misal: `C:\SmartOfficeAnnouncer`).
           3. Jalankan `SmartOfficeAnnouncer.exe`.
-          4. Jendela aplikasi desktop akan langsung terbuka otomatis.
+          4. Ikon akan muncul di **system tray** (pojok kanan bawah taskbar).
+          5. Jendela aplikasi desktop terbuka otomatis dalam ±1 detik.
         files: SmartOfficeAnnouncer_Windows_Ready.zip
         draft: false
         prerelease: false
